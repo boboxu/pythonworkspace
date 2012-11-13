@@ -1,0 +1,28 @@
+-- VERSION_3
+-- START DISKCACHE
+/Users/xuroland/Documents/afterworkdev/pythonworkspace/.metadata/.plugins/org.eclipse.core.resources/.projects/TestPyDev/com.python.pydev.analysis/v1_indexcache
+.v1_indexcache
+GetMagzine|0|/Users/xuroland/Documents/afterworkdev/pythonworkspace/TestPyDev/GetMagzine.py
+-- END DISKCACHE
+-- START DICTIONARY
+1
+1=GetMagzine
+-- END DICTIONARY
+-- START TREE 1
+12
+all|1|allurl!11@
+con|1|con!11@
+cre|6|CreateMenu!10@CreateMagzine!10@CreateLocalDir!10@CreateTables!10@CreateArticle!10@CreateTable!10@
+hos|1|host!11@
+ins|2|InsertIntoTable!10@InsertDataIntoTables!10@
+isy|1|IsYearExist!10@
+pha|0|
+rea|1|ReadContextFromUrl!10@
+roo|1|rootpath!11@
+sho|1|ShowTables!10@
+sou|0|
+wri|3|WritePhaseByPhasehref!10@WriteHtmlByhref!10@WriteFileSystem!10@
+-- END TREE
+-- START TREE 2
+0
+-- END TREE

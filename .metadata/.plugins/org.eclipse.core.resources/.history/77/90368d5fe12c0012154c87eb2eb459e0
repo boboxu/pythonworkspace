@@ -1,0 +1,186 @@
+# -*- coding=utf8 -*-
+from urllib import urlopen 
+from pysqlite2 import dbapi2 as sqlite3
+from BeautifulSoup import BeautifulSoup
+import os
+#google = urllib.urlopen('http://www.google.com')
+#print 'http header:/n', google.info()
+#print 'http status:', google.getcode()
+#print 'url:', google.geturl()
+#for line in google: # 就像在操作本地文件
+#    print line,
+#google.close()
+
+    
+con = sqlite3.connect('/Users/xuroland/Documents/afterworkdev/pythonstart/Housebook.db')
+host = "http://www.housebook.com.cn/"
+rootpath = "./html/"
+
+def CreateArticle():
+    print "CreateArticle"
+
+def CreateMenu(Phases):
+    print "CreateMenu"
+
+def CreateTable(CreateTableSql,con):
+    cur = con.cursor()
+    cur.execute(CreateTableSql)
+    
+def InsertIntoTable(InsertSql,con):
+    cur = con.cursor()
+    cur.executescript(InsertSql)
+
+def ReadContextFromUrl(url):
+    context = urlopen(url).read().decode('gb2312').encode('utf8')
+    context = context.replace('gb2312','utf8')
+    context = context.replace('&lt;','<')
+    context = context.replace('&gt;','>')
+    context = context.replace("""<!Banly AutoHTML V1.0 Copyright(C) 1999 EWay Studio Online Publishing Co.,LTD. All rights reserved!>""",'')
+    context = context.replace("""<a href="../main.htm"><img border="0" src="../title3.gif" width="40" height="53"></a>""",'')
+    context = context.replace("""<td width="43" rowspan="2" bgcolor="#C0C0C0" valign="top">\r\n      <p align="center"><br><br><b><font size="4">读<br>\r\n      书<br>\r\n      人<br>\r\n      的<br>\r\n      心<br>\r\n      灵<br>\r\n      家<br>\r\n      园</font></b></p>\r\n      <p>　</p>\r\n      <p align="center"><b><font size="4"><br>\r\n      思<br>\r\n      索<br>\r\n      者<br>\r\n      的<br>\r\n      精<br>\r\n      神<br>\r\n      领<br>\r\n      地</font></b></td>\r\n""",'')
+    context = context.replace('<td valign="top" align="left" width="942"></td>','')
+    context = context.replace('<td width="26"></td>','')
+    context = context.replace('43','18')
+    context = context.replace('<td width="28"></td>','')
+    context = context.replace('976','320')
+    context = context.replace('1049','320')
+    context = context.replace('858','210')
+    context = context.replace('129','50')
+    context = context.replace('616','158')
+    context = context.replace('176','58')
+    context = context.replace('757','1000')
+    
+    return context
+
+def IsYearExist(Year,con):
+    cur = con.cursor()
+    cur.execute("select * from Years order by id desc")
+    for row in cur:
+        if row[1] == Year:
+            return True
+    return False
+
+#创建 Phases表和Articles表
+def CreateTables():
+    CreateTable("""create table Years (
+        id integer primary key autoincrement,
+        year nvarchar
+        )""",con)
+            
+    CreateTable("""create table Phases (
+                id integer primary key autoincrement,
+                phase nvarchar,
+                year nvarchar,
+                menuurl nvarchar
+                )""",con)
+#根据期数输入年和期两个表
+def InsertDataIntoTables(phasehref):
+    indexofslash = int(phasehref.find('/'))
+    if indexofslash != -1:
+        phasename = phasehref[0:indexofslash]
+        if phasename.find('http') == 0 or phasename.find('zk') != -1:
+            return
+        elif phasename.find('k') != -1:
+            phasename = phasename.replace('k','000')
+            phasename = phasename[0:6]
+        elif phasename.find('html') != -1:
+            phasename = phasename.replace('html','19990')
+        else: 
+            phasename = str(phasename)
+    
+#        print phasename
+        year = phasename[0:4]; 
+#        print year
+        if not IsYearExist(year,con):
+            strSql = """insert into Years(year)
+                values ('"""+year+"""');"""
+            InsertIntoTable(strSql,con)
+        
+        strSql = """insert into Phases(phase,year,menuurl)
+            values ('"""+phasename.replace('k','000')+"""','"""+year+"""','"""+phasehref+"""');"""
+        
+        InsertIntoTable(strSql,con)
+
+def CreateLocalDir(Path):
+    return
+    os.makedirs(Path)
+
+def WriteFileSystem(Path,content):
+    file_object = open(Path, 'wb')
+    file_object.write(content)
+    file_object.close()
+
+def WriteHtmlByhref():
+    return
+def WritePhaseByPhasehref(phasehref):
+    if phasehref.find('201209') == -1:
+        return
+    indexofslash = int(phasehref.find('/'))
+    if indexofslash != -1:
+        phasename = phasehref[0:indexofslash]
+        if phasename.find('http') == 0 or phasename.find('zk') != -1:
+            return
+        elif phasename.find('k') != -1:
+            phasename = phasename.replace('k','000')
+            phasename = phasename[0:6]
+        elif phasename.find('html') != -1:
+            phasename = phasename.replace('html','19990')
+        else: 
+            phasename = str(phasename)
+        year = phasename[0:4]; 
+        phasepath = rootpath+year+'/'+phasename
+        CreateLocalDir(phasepath)
+        menuurl = host+phasehref
+#将每一期的内容写入到指定文件夹
+        menucontext = ReadContextFromUrl(menuurl)
+        print (menucontext[400:])
+#    先写目录
+        WriteFileSystem(rootpath+year+'/'+phasehref,menucontext)
+#    解析目录
+        menusoup = BeautifulSoup(menucontext)
+#        for tdtag in menusoup.findAll('td'):
+#            print tdtag
+#            try:
+#                if tdtag['width'] == '43' and tdtag['rowspan'] == '2' and tdtag['bgcolor'] == '#C0C0C0' and tdtag['valign'] == 'top':
+#                    tdtag.extract()
+#            except KeyError:
+#                print "keyerror"   
+            
+#        WriteFileSystem(rootpath+year+'/'+phasehref,menusoup.prettify())
+#        先写目录上的图片
+        for imgtag in menusoup.findAll('img'):
+            imgsrc = imgtag['src']
+            imgpath = phasepath+'/'+imgsrc
+            imgurl = host+'/'+ phasename +'/'+imgsrc
+            imgcontent = urlopen(imgurl).read()
+            WriteFileSystem(imgpath,imgcontent)
+#        写每一篇的内容
+        
+def ShowTables():
+    cur = con.cursor()
+    cur.execute("select * from Years order by id desc")
+    for row in cur:
+        print row
+        
+    cur.execute("select * from Phases order by id desc")
+    for row in cur:
+        print row   
+
+def CreateMagzine(url):
+    print "CrateMagzine"
+#    CreateTables()
+#解析url获取期刊的目录名称，正常情况下应该为"201208menu.htm" 这样子就可以接续出年数和期数了
+    context = ReadContextFromUrl(url)
+    soup = BeautifulSoup(context)
+#    print soup.prettify()
+    for atag in soup.findAll('a'):
+        phasehref = atag['href']
+#        InsertDataIntoTables(phasehref)
+        WritePhaseByPhasehref(phasehref)
+#    ShowTables()       
+
+
+allurl = "http://www.housebook.com.cn/old.htm"
+CreateMagzine(allurl)         
+con.close()
+
